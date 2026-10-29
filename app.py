@@ -7,6 +7,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.graphics.shapes import Drawing, Rect, Circle, Line, String, Polygon
+from PIL import Image as PILImage
+from io import BytesIO
 
 # Configuração do Streamlit
 st.set_page_config(page_title="Gerador Pro - Kit EdukaKids", page_icon="🎨", layout="centered")
@@ -30,6 +32,8 @@ tipos_layout_opcoes = [
 # Dados das Fichas
 st.subheader("📝 Editor de Fichas e Layouts Pedagógicos")
 fichas_data = []
+previews = []
+
 for i in range(1, int(quantidade) + 1):
     with st.expander(f"Ficha {i:02d}", expanded=(i == 1)):
         col1, col2, col3 = st.columns([1, 1.5, 1.5])
@@ -42,6 +46,48 @@ for i in range(1, int(quantidade) + 1):
             imagem = st.selectbox(f"Imagem #{i}", [""] + os.listdir("assets/"), key=f"imagem_{i}")
 
         instrucao = st.text_area(f"Instrução / Enunciado #{i}", value=f"Siga as orientações da atividade {i} com bastante atenção e capricho.", key=f"instr_{i}")
+
+        # Botão para atualizar a pré-visualização
+        if st.button(f"🔍 Pré-visualizar {i:02d}", key=f"preview_{i}"):
+            pdf_buffer = BytesIO()
+            doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+            story = []
+
+            # Cabeçalho Comercial com Logo Oficial
+            logo_path = "assets/EdukakidsLogo.jpg"
+            logo_img = Image(logo_path, width=60, height=60) if os.path.exists(logo_path) else Paragraph("<b>EdukaKids</b>", getSampleStyleSheet()['Normal'])
+
+            header_data = [
+                [logo_img, Paragraph("<b>ESCOLA:</b> __________________________________________________<br/><br/><b>ALUNO(A):</b> _________________________________ <b>DATA:</b> ___/___/_____", getSampleStyleSheet()['Normal'])]
+            ]
+            header_table = Table(header_data, colWidths=[75, 425])
+            header_table.setStyle(TableStyle([
+                ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#1d3557')),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('PADDING', (0, 0), (-1, -1), 5),
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8f9fa'))
+            ]))
+
+            story.append(header_table)
+            story.append(Spacer(1, 10))
+
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=14, textColor=colors.HexColor('#1d3557'), alignment=1, spaceAfter=4)
+            body_style = ParagraphStyle('BodyStyle', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#457b9d'), alignment=1, spaceAfter=10)
+
+            story.append(Paragraph(f"<b>{num}: {titulo}</b>", title_style))
+            story.append(Paragraph(instrucao, body_style))
+
+            # Insere o layout gráfico dinâmico escolhido para esta ficha
+            story.append(gerar_grafico_por_layout(layout_escolhido, image_path=f"assets/{imagem}" if imagem else None))
+
+            doc.build(story)
+            pdf_buffer.seek(0)
+
+            # Convert PDF to an image
+            pil_image = PILImage.open(BytesIO(pdf_buffer.getvalue()))
+            previews.append((i, pil_image))
+
         fichas_data.append((num, titulo, instrucao, layout_escolhido, imagem))
 
 # Função para gerar o layout gráfico
@@ -93,13 +139,19 @@ def gerar_grafico_por_layout(layout_tipo, image_path=None):
 
     return d
 
+# Exibir pré-visualizações
+if previews:
+    st.subheader("👀 Pré-visualização das Fichas")
+    for i, pil_image in previews:
+        st.image(pil_image, caption=f"Ficha {i:02d} - Pré-visualização", use_column_width=True)
+
 # Botão para gerar o pacote profissional
 if st.button("🚀 Gerar Pacote Profissional em ZIP", type="primary"):
-    buffer_zip = io.BytesIO()
+    buffer_zip = BytesIO()
 
     with zipfile.ZipFile(buffer_zip, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for num, titulo, instrucao, layout_escolhido, imagem in fichas_data:
-            pdf_buffer = io.BytesIO()
+            pdf_buffer = BytesIO()
 
             doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
             story = []
@@ -149,4 +201,5 @@ if st.button("🚀 Gerar Pacote Profissional em ZIP", type="primary"):
 # Limpar os dados
 if st.button(" #=> Limpar Dados", type="secondary"):
     fichas_data = []
+    previews = []
     st.experimental_rerun()
