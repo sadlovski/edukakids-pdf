@@ -120,7 +120,7 @@ def gerar_grafico_por_layout(layout_tipo, image_path=None):
         d.add(Rect(100, 100, 80, 120, rx=5, ry=5, fillColor=colors.HexColor('#f1faee'), strokeColor=colors.HexColor('#457b9d'), strokeWidth=1.5))
         d.add(Rect(220, 120, 180, 80, rx=5, ry=5, fillColor=colors.HexColor('#f1faee'), strokeColor=colors.HexColor('#457b9d'), strokeWidth=1.5))
         d.add(String(75, 75, "INÍCIO", fontSize=9, fontName="Helvetica-Bold", fillColor=colors.HexColor('#e63946')))
-        d.add(String(400, 230, "FIM", fontSize=9, fontName="Helvetica-Bold", fillColor=colors.HexColor('#2a9d8f'))
+        d.add(String(400, 230, "FIM", fontSize=9, fontName="Helvetica-Bold", fillColor=colors.HexColor('#2a9d8f')))
 
     elif "Cruzadinha" in layout_tipo:
         d.add(String(170, 290, "• CAÇA-PALAVRAS E CRUZADINHA •", fontSize=11, fillColor=colors.HexColor('#1d3557'), fontName="Helvetica-Bold"))
