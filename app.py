@@ -1,143 +1,141 @@
 import os
 import zipfile
 import io
-import math
 import streamlit as st
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
-from reportlab.graphics.shapes import Drawing, Rect, Circle, Line, String, Polygon, PolyLine
+from reportlab.graphics.shapes import Drawing, Rect, Circle, Line, String, Polygon
 
-st.set_page_config(page_title="Gerador Kit EdukaKids Pro", page_icon="🎨", layout="centered")
+st.set_page_config(page_title="Gerador Pro - Kit EdukaKids", page_icon="🎨", layout="centered")
 
-st.title("🎨 Gerador Profissional - Kit EdukaKids")
-st.markdown("Painel de alta performance para criação de apostilas infantis com múltiplos layouts (Ligar Pontos, Caligrafia e Atividades).")
+st.title("🎨 Painel Avançado - Kit EdukaKids Pro")
+st.markdown("Sistema inteligente para geração automatizada de apostilas com múltiplos layouts pedagógicos e identidade visual oficial.")
 
-# Barra Lateral
+# Configurações na Barra Lateral
 st.sidebar.header("📁 Configurações do Módulo")
 nome_modulo = st.sidebar.text_input("Nome da Pasta do Módulo", "01-Alfabetizacao-Divertida")
-quantidade = st.sidebar.slider("Número de Fichas", min_value=1, max_value=30, value=6)
+quantidade = st.sidebar.slider("Número de Fichas do Lote", min_value=1, max_value=30, value=6)
 
-st.subheader("📝 Conteúdo das Fichas")
+st.subheader("📝 Editor de Fichas e Layouts Pedagógicos")
 
 fichas_data = []
+tipos_layout_opcoes = [
+    "Caligrafia Escolar (Pautas e Pontilhados)", 
+    "Ligar os Pontos (Numeração Sequencial)", 
+    "Labirinto / Circuito de Traçado", 
+    "Cruzadinha / Caça-Palavras (Estruturado)", 
+    "Atividade de Pintura e Formas Livres"
+]
+
 for i in range(1, int(quantidade) + 1):
     with st.expander(f"Ficha {i:02d}", expanded=(i == 1)):
-        col1, col2 = st.columns([1, 2])
+        col1, col2, col3 = st.columns([1, 1.5, 1.5])
         with col1:
-            num = st.text_input(f"Identificador #{i}", value=f"Ficha {i:02d}", key=f"num_{i}")
+            num = st.text_input(f"ID #{i}", value=f"Ficha {i:02d}", key=f"num_{i}")
         with col2:
             titulo = st.text_input(f"Título #{i}", value=f"Atividade Divertida {i}", key=f"titulo_{i}")
-        instrucao = st.text_area(f"Instrução da Ficha #{i}", value=f"Siga as orientações da atividade {i} com atenção.", key=f"instr_{i}")
-        fichas_data.append((num, titulo, instrucao))
+        with col3:
+            layout_escolhido = st.selectbox(f"Layout #{i}", tipos_layout_opcoes, key=f"layout_{i}")
+            
+        instrucao = st.text_area(f"Instrução / Enunciado #{i}", value=f"Siga as orientações da atividade {i} com bastante atenção e capricho.", key=f"instr_{i}")
+        fichas_data.append((num, titulo, instrucao, layout_escolhido))
 
-def criar_layout_atividade(titulo):
-    """Gera layouts profissionais diferenciados (Ligar pontos, Caligrafia, Labirinto ou Traçado)"""
-    d = Drawing(500, 360)
+def gerar_grafico_por_layout(layout_tipo):
+    """Gera o motor gráfico vetorial adequado para cada tipo de atividade pedagógica"""
+    d = Drawing(500, 340)
     
-    # Moldura principal da atividade (estilo ficha comercial)
-    d.add(Rect(10, 10, 480, 340, rx=10, ry=10, fillColor=colors.white, strokeColor=colors.HexColor('#2b2d42'), strokeWidth=2))
+    # Moldura padrão profissional da ficha
+    d.add(Rect(10, 10, 480, 320, rx=10, ry=10, fillColor=colors.white, strokeColor=colors.HexColor('#1d3557'), strokeWidth=2))
     
-    t_lower = titulo.lower()
-    
-    if "ponto" in t_lower or "ligar" in t_lower or "22" in t_lower:
-        # Layout de Ligar os Pontos com numeração em formato de estrela/casinha
-        d.add(String(200, 320, "• LIGUE OS PONTOS NA ORDEM •", fontSize=12, fillColor=colors.HexColor('#2b2d42'), fontName="Helvetica-Bold"))
-        
-        # Coordenadas formando uma estrela/desenho geométrico numerado
-        pontos = [
-            (250, 260, "1"), (280, 210, "2"), (340, 210, "3"), 
-            (290, 170, "4"), (310, 110, "5"), (250, 140, "6"), 
-            (190, 110, "7"), (210, 170, "8"), (160, 210, "9"), (220, 210, "10")
-        ]
-        
-        for px, py, pnum in pontos:
-            d.add(Circle(px, py, 6, fillColor=colors.HexColor('#2b2d42'), strokeColor=colors.HexColor('#2b2d42')))
-            d.add(Circle(px, py, 14, fillColor=colors.white, strokeColor=colors.HexColor('#8d99ae'), strokeWidth=1, strokeDashArray=[2, 2]))
-            d.add(String(px - 4, py - 4, pnum, fontSize=9, fillColor=colors.HexColor('#d90429'), fontName="Helvetica-Bold"))
+    if "Caligrafia" in layout_tipo:
+        d.add(String(160, 290, "• TREINANDO A ESCRITA E TRAÇADO •", fontSize=11, fillColor=colors.HexColor('#1d3557'), fontName="Helvetica-Bold"))
+        for y_pos in [220, 140, 60]:
+            d.add(Line(30, y_pos + 35, 470, y_pos + 35, strokeColor=colors.HexColor('#ced4da'), strokeWidth=1))
+            d.add(Line(30, y_pos + 20, 470, y_pos + 20, strokeColor=colors.HexColor('#457b9d'), strokeWidth=1.5, strokeDashArray=[4, 4]))
+            d.add(Line(30, y_pos, 470, y_pos, strokeColor=colors.HexColor('#ced4da'), strokeWidth=1))
+            d.add(String(50, y_pos + 8, "A a  B b  C c  D d  E e", fontSize=20, fillColor=colors.HexColor('#adb5bd'), fontName="Helvetica-Bold"))
             
-    elif "caligrafia" in t_lower or "letra" in t_lower or "vogal" in t_lower or "família" in t_lower:
-        # Layout de Caligrafia Escolar (Linhas pautadas duplas/triplas)
-        d.add(String(30, 320, "• TREINANDO A ESCRITA •", fontSize=12, fillColor=colors.HexColor('#2b2d42'), fontName="Helvetica-Bold"))
+    elif "Ligar os Pontos" in layout_tipo:
+        d.add(String(170, 290, "• LIGUE OS PONTOS NA ORDEM NUMÉRICA •", fontSize=11, fillColor=colors.HexColor('#1d3557'), fontName="Helvetica-Bold"))
+        coords = [(220, 220, "1"), (270, 250, "2"), (330, 240, "3"), (360, 180, "4"), (320, 120, "5"), (250, 110, "6"), (200, 160, "7")]
+        for px, py, pnum in coords:
+            d.add(Circle(px, py, 6, fillColor=colors.HexColor('#1d3557'), strokeColor=colors.HexColor('#1d3557')))
+            d.add(Circle(px, py, 14, fillColor=colors.white, strokeColor=colors.HexColor('#e63946'), strokeWidth=1, strokeDashArray=[2, 2]))
+            d.add(String(px - 3, py - 4, pnum, fontSize=9, fillColor=colors.HexColor('#e63946'), fontName="Helvetica-Bold"))
+            
+    elif "Labirinto" in layout_tipo:
+        d.add(String(180, 290, "• ENCONTRE A SAÍDA DO LABIRINTO •", fontSize=11, fillColor=colors.HexColor('#1d3557'), fontName="Helvetica-Bold"))
+        # Paredes do labirinto simuladas por retângulos limpos
+        d.add(Rect(60, 60, 380, 200, rx=5, ry=5, fillColor=colors.white, strokeColor=colors.HexColor('#1d3557'), strokeWidth=2))
+        d.add(Rect(100, 100, 80, 120, rx=5, ry=5, fillColor=colors.HexColor('#f1faee'), strokeColor=colors.HexColor('#457b9d'), strokeWidth=1.5))
+        d.add(Rect(220, 120, 180, 80, rx=5, ry=5, fillColor=colors.HexColor('#f1faee'), strokeColor=colors.HexColor('#457b9d'), strokeWidth=1.5))
+        d.add(String(75, 75, "INÍCIO", fontSize=9, fontName="Helvetica-Bold", fillColor=colors.HexColor('#e63946')))
+        d.add(String(400, 230, "FIM", fontSize=9, fontName="Helvetica-Bold", fillColor=colors.HexColor('#2a9d8f')))
         
-        for linha_y in [250, 170, 90]:
-            # Linha guia caligráfica
-            d.add(Line(40, linha_y + 30, 460, linha_y + 30, strokeColor=colors.HexColor('#adb5bd'), strokeWidth=1))
-            d.add(Line(40, linha_y + 15, 460, linha_y + 15, strokeColor=colors.HexColor('#457b9d'), strokeWidth=1.5, strokeDashArray=[4, 4]))
-            d.add(Line(40, linha_y, 460, linha_y, strokeColor=colors.HexColor('#adb5bd'], strokeWidth=1))
-            
-            # Exemplo pontilhado para caligrafia
-            d.add(String(60, linha_y + 8, "A a A a A a A a A a", fontSize=22, fillColor=colors.HexColor('#ced4da'), fontName="Helvetica-Bold"))
-            
+    elif "Cruzadinha" in layout_tipo:
+        d.add(String(170, 290, "• CAÇA-PALAVRAS E CRUZADINHA •", fontSize=11, fillColor=colors.HexColor('#1d3557'), fontName="Helvetica-Bold"))
+        # Grade de caça-palavras
+        for r in range(4):
+            for c in range(8):
+                d.add(Rect(90 + (c * 40), 90 + (r * 40), 35, 35, fillColor=colors.white, strokeColor=colors.HexColor('#1d3557'), strokeWidth=1))
+        d.add(String(100, 255, "A   B   C   D   E   F   G   H", fontSize=12, fontName="Helvetica-Bold", fillColor=colors.HexColor('#457b9d')))
+        
     else:
-        # Layout de Traçado e Circuito Divertido
-        d.add(String(180, 320, "• TRACE O CAMINHO CORRETO •", fontSize=12, fillColor=colors.HexColor('#2b2d42'), fontName="Helvetica-Bold"))
+        d.add(String(170, 290, "• ESPAÇO DE CRIAÇÃO E PINTURA •", fontSize=11, fillColor=colors.HexColor('#1d3557'), fontName="Helvetica-Bold"))
+        d.add(Rect(50, 50, 400, 210, rx=15, ry=15, fillColor=colors.HexColor('#f8f9fa'), strokeColor=colors.HexColor('#457b9d'), strokeWidth=1.5, strokeDashArray=[6, 6]))
+        d.add(String(165, 145, "🎨 Cole ou Desenhe aqui", fontSize=14, fontName="Helvetica-Bold", fillColor=colors.HexColor('#6c757d')))
         
-        # Pista em zigue-zague pontilhada
-        path_points = [(50, 180), (150, 250), (250, 110), (350, 250), (450, 180)]
-        for i in range(len(path_points)-1):
-            p1 = path_points[i]
-            p2 = path_points[i+1]
-            d.add(Line(p1[0], p1[1], p2[0], p2[1], strokeColor=colors.HexColor('#2b2d42'), strokeWidth=3, strokeDashArray=[6, 6]))
-            
-        # Ícones de início e fim
-        d.add(Circle(50, 180, 20, fillColor=colors.white, strokeColor=colors.HexColor('#2b2d42'), strokeWidth=2))
-        d.add(String(42, 175, "INÍCIO", fontSize=7, fontName="Helvetica-Bold"))
-        
-        d.add(Circle(450, 180, 20, fillColor=colors.white, strokeColor=colors.HexColor('#2b2d42'), strokeWidth=2))
-        d.add(String(442, 175, "FIM", fontSize=8, fontName="Helvetica-Bold"))
-
     return d
 
-if st.button("🚀 Gerar e Baixar Apostila Profissional em ZIP", type="primary"):
+if st.button("🚀 Gerar Pacote Profissional em ZIP", type="primary"):
     buffer_zip = io.BytesIO()
     
     with zipfile.ZipFile(buffer_zip, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for num, titulo, instrucao in fichas_data:
+        for num, titulo, instrucao, layout_escolhido in fichas_data:
             pdf_buffer = io.BytesIO()
             
             doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
             story = []
             
-            # Cabeçalho Profissional com Logo e Bloco de Identificação (Escola/Nome/Data)
+            # Cabeçalho Comercial com Logo Oficial
             logo_path = "EdukakidsLogo.jpg"
-            logo_img = Image(logo_path, width=65, height=65) if os.path.exists(logo_path) else Paragraph("<b>EdukaKids</b>", getSampleStyleSheet()['Normal'])
+            logo_img = Image(logo_path, width=60, height=60) if os.path.exists(logo_path) else Paragraph("<b>EdukaKids</b>", getSampleStyleSheet()['Normal'])
             
             header_data = [
                 [logo_img, Paragraph("<b>ESCOLA:</b> __________________________________________________<br/><br/><b>ALUNO(A):</b> _________________________________ <b>DATA:</b> ___/___/_____", getSampleStyleSheet()['Normal'])]
             ]
-            header_table = Table(header_data, colWidths=[80, 420])
+            header_table = Table(header_data, colWidths=[75, 425])
             header_table.setStyle(TableStyle([
                 ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#1d3557')),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('PADDING', (0, 0), (-1, -1), 6),
+                ('PADDING', (0, 0), (-1, -1), 5),
                 ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8f9fa'))
             ]))
             
             story.append(header_table)
-            story.append(Spacer(1, 15))
+            story.append(Spacer(1, 10))
             
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#1d3557'), alignment=1, spaceAfter=6)
-            body_style = ParagraphStyle('BodyStyle', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#457b9d'), alignment=1, spaceAfter=12)
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=14, textColor=colors.HexColor('#1d3557'), alignment=1, spaceAfter=4)
+            body_style = ParagraphStyle('BodyStyle', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#457b9d'), alignment=1, spaceAfter=10)
             
-            # Título e Instrução da Atividade
             story.append(Paragraph(f"<b>{num}: {titulo}</b>", title_style))
             story.append(Paragraph(instrucao, body_style))
             
-            # Adiciona o layout gráfico inteligente correspondente
-            story.append(criar_layout_atividade(titulo))
+            # Insere o layout gráfico dinâmico escolhido para esta ficha
+            story.append(gerar_grafico_por_layout(layout_escolhido))
             
             doc.build(story)
             
             pdf_filename = f"{nome_modulo}/{num.lower().replace(' ', '-')}.pdf"
             zip_file.writestr(pdf_filename, pdf_buffer.getvalue())
-    
+            
     buffer_zip.seek(0)
-    st.success("🎉 Apostila gerada com layout profissional de alto nível!")
+    st.success("🎉 Apostila gerada com sucesso com múltiplos layouts profissionais!")
     st.download_button(
-        label="📥 Baixar ZIP com o Kit Completo",
+        label="📥 Baixar ZIP com o Módulo Completo",
         data=buffer_zip,
         file_name=f"{nome_modulo}.zip",
         mime="application/zip"
